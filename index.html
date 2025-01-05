@@ -1,0 +1,1350 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0,maximum-scale=1.0, user-scalable=no" />
+    <title>Urbanisme</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+
+
+    <style>
+        body { margin: 0; padding: 0; }
+        html, body, #map { height: 100%; }
+
+        /* Estil per a la franja superior */
+        .top-bar {
+            background-color: rgba(255, 255, 255, 0.8);
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 10px;
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            z-index: 1000;
+        }
+
+        /* Estil per a les icones */
+        .top-bar .icon {
+            top: 0;
+            width: auto;
+            height: auto;
+            /*background-color: #3388ff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;*/
+        }
+        
+        .top-bar .icon img {
+            width: auto;
+            height: 30px;
+        }
+
+        #sidebar {
+            position: absolute;
+            top: 30px;
+            left: 10px;
+            height: auto;
+            /*background: white;*/
+            padding: 10px;
+            z-index: 1000;
+            /*box-shadow: 0px 0px 10px rgba(0,0,0,0.5);*/
+        }
+        #search-municipi {
+            position: fixed;
+            top: 30px;
+            left: 10px;
+            /*background: white;*/
+            padding: 10px;
+            z-index: 500;
+            /*box-shadow: 0px 0px 10px rgba(0,0,0,0.5);*/
+            width: auto;           /* Ajustar el ancho automáticamente */
+            height: auto;          /* Ajustar la altura automáticamente */
+            font-size: 11px; /* Mida de lletra de 10px */
+        }
+
+        #search-poligon {
+            position: fixed;
+            top: 70px;
+            left: 10px;
+            /*background: white;*/
+            padding: 10px;
+            z-index: 1000;
+            /*box-shadow: 0px 0px 10px rgba(0,0,0,0.5);*/
+            width: auto;           /* Ajustar el ancho automáticamente */
+            height: auto;          /* Ajustar la altura automáticamente */
+            font-size: 11px; /* Mida de lletra de 10px */
+
+        }
+
+        button {
+            padding: 10px; /* Espaciado básico */
+            border: none;
+            border-radius: 5px;
+            background-color: #ccc;
+        }
+
+        .search-label{padding: 10px; /* Espaciado básico */
+            border: none;
+            background-color: #3A6B8C;
+            color:white;
+            width: 80px; /* Amplada fixa per a totes les etiquetes */
+            display: inline-block; /* Permet que el label i l'input estiguin alineats en línia */
+            text-align: left; /* Centra el text dins de l'etiqueta */
+            font-size: 11px; /* Mida de lletra de 10px */
+            height: auto;          /* Ajustar la altura automáticamente */
+        }
+
+        /* Fer la lletra del pop-up més petita */
+  .leaflet-popup-content {
+    font-size: 10px; /* Ajusta la mida de la lletra segons el que necessitis */
+  }
+
+  /* Fer la lletra de la llegenda més petita */
+  .info.legend {
+    font-size: 10px; /* Ajusta la mida de la lletra segons el que necessitis */
+  }
+
+  /* Opcional: Ajustar el padding i marges per fer-ho més compacte */
+  .info.legend i {
+    margin-right: 3px; /* Espai entre les icones i el text */
+  }
+
+  /*Informació a la part superior esquerra de la pantalla*/
+#info-box {
+    position: fixed;
+    top: 300px; /* Posiciona el quadre a 150px des del top */
+    left: 0; /* Manté el quadre a l'esquerra de la pantalla */
+    width: auto;
+    height: auto;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    box-shadow: 0px 2px 10px rgba(0, 0, 0, 0.2);
+    font-size: 12px;
+    z-index: 1000;
+    display: none; /* Ocultarlo por defecto */
+}
+
+
+
+
+/*Estil del botó d'informació de la pantalla inferior*/
+#clear-info {
+    position: fixed;       /* Fijo en la pantalla */
+    top: 280px;             /* Separación desde la parte superior */
+    left: 10px;            /* Separación desde la izquierda */
+    z-index: 1000;         /* Para asegurarse de que esté encima de otros elementos */
+    padding: 5px 10px;    /* Espaciado interno */
+    background-color: #3A6B8C; /* Color de fondo */
+    color: white;          /* Color del texto */
+    border: none;          /* Sin borde */
+    border-radius: 5px;    /* Bordes redondeados */
+    cursor: pointer;       /* Cambia el cursor al pasar el mouse */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Sombra */
+    width: auto;           /* Ajustar el ancho automáticamente */
+    height: auto;          /* Ajustar la altura automáticamente */
+    font-size: 11px;
+}
+
+#clear-info:hover {
+    background-color: #2E5A73; /* Cambia el color al pasar el mouse */
+}
+
+
+
+
+
+#reset-button {
+    position: fixed;       /* Fijo en la pantalla */
+    top: 120px;             /* Separación desde la parte superior */
+    left: 270px;            /* Separación desde la izquierda */
+    z-index: 1000;         /* Para asegurarse de que esté encima de otros elementos */
+    padding: 10px;    /* Espaciado interno */
+    background-color: #3A6B8C; /* Color de fondo */
+    color: white;          /* Color del texto */
+    border: none;           /* Sin borde */
+    margin-left: 12px;          
+    border-radius: 5px;    /* Bordes redondeados */
+    cursor: pointer;       /* Cambia el cursor al pasar el mouse */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Sombra */
+    width: auto;           /* Ajustar el ancho automáticamente */
+    height: auto;          /* Ajustar la altura automáticamente */
+    font-size: 11px; /* Mida de lletra de 10px */
+    font-family: !important;
+
+}
+
+
+/*botó que oculta capa de municipi i poligons*/
+#toggle-legend-layers {
+    position: fixed;       /* Fijo en la pantalla */
+    top: 120px;             /* Separación desde la parte superior */
+    left: 10px;            /* Separación desde la izquierda */
+    z-index: 1000;         /* Para asegurarse de que esté encima de otros elementos */
+    padding: 10px;    /* Espaciado interno */
+    background-color: #3A6B8C; /* Color de fondo */
+    color: white;          /* Color del texto */
+    border: none;           /* Sin borde */
+    margin-left: 12px;          
+    border-radius: 5px;    /* Bordes redondeados */
+    cursor: pointer;       /* Cambia el cursor al pasar el mouse */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Sombra */
+    width: 255px;           /* Ajustar el ancho automáticamente */
+    height: auto;          /* Ajustar la altura automáticamente */
+    font-size: 11px; /* Mida de lletra de 10px */
+    font-family: !important;
+
+}
+
+/*posar la cerca de direccions a una alçada determinada*/
+
+.custom-geocoder {
+    top: 180px !important; /* Distància del top */
+    left: 10px !important; /* Distància del costat esquerre */
+    position: absolute !important; /* Assegura que tingui posició absoluta */
+    width: auto;
+    height:auto;
+    font-size: 11px; /* Mida de lletra de 10px */
+}
+
+
+
+/*botó que oculta totes les capes*/
+#toggle-all-legend-layers {
+    position: fixed;       /* Fijo en la pantalla */
+    top: 40px;             /* Separación desde la parte superior */
+    right: 10px;            /* Separación desde la izquierda */
+    z-index: 3000;         /* Para asegurarse de que esté encima de otros elementos */
+    padding: 10px;    /* Espaciado interno */
+    background-color: white; /* Color de fondo */
+    color: red;          /* Color del texto */
+    border: none;           /* Sin borde */
+    margin-left: 12px;          
+    border-radius: 5px;    /* Bordes redondeados */
+    cursor: pointer;       /* Cambia el cursor al pasar el mouse */
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3); /* Sombra */
+    width: 120px;           /* Ajustar el ancho automáticamente */
+    height: auto;          /* Ajustar la altura automáticamente */
+    font-size: 11px; /* Mida de lletra de 10px */
+    font-family: !important;
+   }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    </style>
+</head>
+<body>
+
+    <!-- Franja superior amb dues icones -->
+    <div class="top-bar">
+        <div class="icon" style="position: absolute; left: 10px;">
+            <img src="https://github.com/APCC22/fotos1/blob/main/imageonline-co-transparentimage-5.png?raw=true" alt="Icona Esquerra">
+        </div>
+        <div class="icon" style="position: absolute; right: 50px;">
+            <img src="https://github.com/APCC22/fotos1/blob/main/Marca%20DB%20positiu%20horitzontal.png?raw=true" alt="Icona Dreta">
+        </div>
+    </div>
+
+
+
+
+    <div id="sidebar">
+        <button id="clear-info">Ocultar informació &darr;</button>
+        
+    </div>
+
+    <button id="reset-button">Reset</button>
+
+    <button id="toggle-legend-layers">Veure usos permesos</button>
+
+    <button id="toggle-all-legend-layers">Desactivar/activar totes les capes</button>
+
+    <!-- Buscar municipi -->
+<div id="search-municipi" style="display: flex; align-items: center; margin-bottom: 15px;">
+    <!-- Etiqueta associada amb el desplegable -->
+    <label for="municipi-dropdown" class="search-label" style="margin-right: 10px;">Cerca municipi:</label>
+    
+    <!-- Desplegable per a Municipis -->
+    <select id="municipi-dropdown" style="padding: 5px; width: 200px; font-size: 10px;">
+        <option  data-nom="Tots">Tots</option>
+    </select>
+</div>
+
+<!-- Buscar poligon -->
+<div id="search-poligon" style="display: flex; align-items: center;">
+    <!-- Etiqueta associada amb el desplegable -->
+    <label for="poligon-dropdown" class="search-label" style="margin-right: 10px;">Cerca poligon:</label>
+    
+    <!-- Desplegable per a Polígons -->
+    <select id="poligon-dropdown" style="padding: 5px; width: 200px; font-size: 10px;">
+        <option  data-nom="Tots">Tots</option>
+    </select>
+</div>
+
+
+        
+
+    <div id="info-box"></div>
+    <div id="map" ></div>
+    
+
+    <script>
+        
+              const topo = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+              const topogris = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/topografic-gris/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+              const simplificat = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/simplificat/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+              const admin = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/administratiu/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+              const estandard = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/estandard/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+              const orto = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+              const ortogris = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto-gris/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+              const hibrid = L.tileLayer('https://geoserveis.icgc.cat/servei/catalunya/mapa-base/wmts/orto-hibrida/MON3857NW/{z}/{x}/{y}.png', {
+                  maxZoom: 20,
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+              });
+
+
+                const map = L.map('map', {
+                  minZoom: 6,
+                  center: [41.368, 1.7092],
+                  zoom: 12,
+                  zoomControl:false,
+                  layers: [hibrid],
+                  attribution: ' &copy; <a href="https://www.icgc.cat/">Institut Cartogràfic i Geològic de Catalunya (ICGC)</a>'
+                   });
+
+              const baseLayers = {
+                  'Topogràfic': topo,
+                  'Topogràfic gris': topogris,
+                  'Simplificat': simplificat,
+                  'Administratiu': admin,
+                  'Estàndard': estandard,
+                  'Orto': orto,
+                  'Orto gris': ortogris,
+                  'Orto híbrida': hibrid
+              };
+              const layerControl = L.control.layers(baseLayers, null, { collapsed: true, position: 'bottomright' }).addTo(map);
+        
+
+
+
+ // Crear el geocodificador de Nominatim limitat a Catalunya o l'Alt Penedès
+const geocoder = L.Control.Geocoder.nominatim({
+    geocodingQueryParams: {
+        viewbox: '1.55,41.47,1.85,41.29', // Bounding box per a l'Alt Penedès
+        bounded: 1 // Limitar els resultats a dins de la bounding box
+    }
+});
+
+// Afegir el control de cerca al mapa
+const geocoderControl = L.Control.geocoder({
+    geocoder: geocoder,
+    collapsed: true, // Mostrar el control expandit
+    placeholder: 'Cerca una adreça o carrer',
+    defaultMarkGeocode: false, // Evitar afegir marcadors automàticament
+    position: 'topleft' // Posicionem a l'esquerra
+
+}).on('markgeocode', function(event) {
+    const latlng = event.geocode.center; // Ubicació del resultat seleccionat
+    map.setView(latlng, 16); // Centrar el mapa
+    L.marker(latlng).addTo(map).bindPopup(event.geocode.name).openPopup(); // Afegir marcador
+}).addTo(map);
+
+
+// Afegeix una classe personalitzada
+const geocoderContainer = document.querySelector('.leaflet-control-geocoder');
+geocoderContainer.classList.add('custom-geocoder');
+
+
+
+
+// Configurar una entrada de cerca personalitzada (si vols)
+const searchInput = document.getElementById('search');
+if (searchInput) {
+    searchInput.addEventListener('input', function() {
+        const query = searchInput.value;
+        if (query) {
+            geocoder.geocode(query, function(results) {
+                if (results.length > 0) {
+                    const latlng = results[0].center; // Primera ubicació trobada
+                    map.setView(latlng, 16); // Centrar el mapa
+                    L.marker(latlng).addTo(map).bindPopup(results[0].name).openPopup(); // Afegir marcador
+                }
+            });
+        }
+    });
+}
+
+
+
+
+
+
+              // Añade el control de zoom en una nueva posición
+                L.control.zoom({
+                position: 'bottomleft' // Cambia la posición a la parte inferior derecha
+                }).addTo(map);
+
+
+
+
+
+
+                //botó que amaga info-box i popups
+                document.getElementById('clear-info').addEventListener('click', function() {
+                 const infoBox = document.getElementById('info-box');
+                 infoBox.style.display = 'none'; // Ocultar el info-box
+                // Tancar tots els popups del mapa
+                 map.eachLayer(function(layer) {
+                 if (layer.getPopup && layer.getPopup()) {
+                layer.closePopup(); // Tanca els popups associats a les capes
+                }
+                });
+
+                });
+
+
+
+
+
+       var geojson; // Variable para almacenar la capa GeoJSON
+
+        // Cargar GeoJSON
+        fetch('source/MucSUC1.geojson')
+            .then(response => response.json())
+            .then(data => {
+                geojson = L.geoJson(data, {
+                    style: function(feature) {
+                        return {
+                            color: getColor(feature.properties.c_clas_ajt), // Color del borde
+                            fillColor: getColor(feature.properties.c_clas_ajt), // Color del relleno
+                            weight: 1, // Grosor del borde
+                            fillOpacity: 0.8, // Opacidad completa del relleno
+                            opacity: 0.5 // Opacidad completa del borde
+                        };
+                    },
+                        onEachFeature: function(feature, layer) {
+                // Añadir un pop-up con la información de los campos c_clas_ajt y d_clas_ajt
+                if (feature.properties) {
+                    const popupContent = `
+                        <strong>Classificació:</strong> ${feature.properties.c_clas_ajt}<br>
+                        <strong>Descripció:</strong> ${feature.properties.d_clas_ajt}
+                    `;
+                    layer.bindPopup(popupContent);
+                        }
+                        }
+                }).addTo(map);
+            });
+
+        // Función para obtener el color según la categoría
+        function getColor(category) {
+            switch(category) {
+                case 'SUC': return '#a8857f'; // Color para SU Consolidat
+                case 'SNC': return '#e6ae99';  // Color para SU No Consolidat
+                case 'SUD': return '#f5d6b2'; // Color para SUD Delimitat
+                case 'SUND': return '#fafad2';  // Color para SUD No Delimitat
+                case 'SNU': return '#e0ffb4'; // Color para SNU
+                default: return 'gray'; // Color por defecto
+            }
+        }
+
+        
+
+
+
+
+
+var mucindustrial; // Variable para almacenar la capa mucindustrial
+
+        // Cargar GeoJSON
+        fetch('source/A1.geojson')
+            .then(response => response.json())
+            .then(data => {
+                mucindustrial = L.geoJson(data, {
+                    style: function(feature) {
+                        return {
+                            color: getColor(feature.properties.c_qual_muc), // Color del borde
+                            fillColor: getColor(feature.properties.c_qual_muc), // Color del relleno
+                            weight: 1, // Grosor del borde
+                            fillOpacity: 0.8, // Opacidad completa del relleno
+                            opacity: 0.5 // Opacidad completa del borde
+                        };
+                    },
+                        onEachFeature: function(feature, layer) {
+                // Añadir un pop-up con la información de los campos c_qual_muc y d_qual_muc
+                if (feature.properties) {
+                    const popupContent = `
+                        <strong>Classificació:</strong> ${feature.properties.c_qual_muc}<br>
+                        <strong>Descripció:</strong> ${feature.properties.d_qual_muc}
+                    `;
+                    layer.bindPopup(popupContent);
+
+                    // Añadir un evento click para actualizar el info-box
+       
+                    layer.on('click', function() {
+                    const infoBox = document.getElementById('info-box');
+    
+                    // Comprovar si el camp "usospermesos" existeix i no està buit
+                    let listaUsos = '';
+                    if (feature.properties.usospermesos) {
+                     const usos = feature.properties.usospermesos.split('.'); // Dividir per punts
+        
+                     // Crear una llista de frases
+                            usos.forEach(function(uso) {
+                            if (uso.trim()) { // Evitar línies buides
+                             listaUsos += `<li>${uso.trim()}</li>`;
+                            }
+                        });
+                        } else {
+                         listaUsos = '<li>No hi ha informació disponible sobre els usos permesos.</li>';
+                         }
+
+                         // Actualitzar el contingut del info-box
+                     infoBox.innerHTML = `
+                      <strong>Classificació ajuntament:</strong> ${feature.properties.c_qual_ajt || 'No disponible'}<br>
+                      <strong>Descripció ajuntament:</strong> ${feature.properties.d_qual_ajt || 'No disponible'}<br>
+                      <br><br>
+                      <strong>Informació dels usos permesos:</strong><br>
+                      <ul>${listaUsos}</ul>
+                       `;
+    
+                      infoBox.style.display = 'block'; // Mostrar el info-box
+                    });
+
+
+
+
+                }
+            }
+                }).addTo(map);
+            });
+
+        // Función para obtener el color según la categoría
+        function getColor(category) {
+            switch(category) {
+                case 'A1': return '#abb6fc'; // 
+                case 'A2': return '#d8bfd8';  // 
+                case 'A3': return '#cac0f8'; // 
+                case 'M1': return '#c3c3c3';  // 
+                case 'M2': return '#c8c378';  // 
+                case 'D2': return '#e4e1fa';  // 
+                case 'D3': return '#f5d6b2';  // 
+                case 'D4': return '#ffe4e1';  // 
+                case 'D5': return '#fafad2';  // 
+                case 'SX0': return '#ffffff';  //
+                case 'SX1': return '#ffffff';  //
+                case 'SX2': return '#ffffff';  //
+                case 'SX3': return '#ffffff';  //
+                case 'SF': return '#dddddd';  // 
+                case 'SH': return '#abebff';  //
+                case 'SV': return '#c0ffa8';  //
+                case 'SE': return '#87ceeb';  //
+                case 'ST': return '#89cdcd';  //
+                case 'D1': return '#dfd3c3';  // 
+                case 'N1': return '#e0ffb4';  //
+                case 'N2': return '#d9e8d9';  //
+                case 'N3': return '#bbd9ba';  //
+                case 'N4': return '#edffd1';  //
+                case 'R1': return '#876964';  // 
+                case 'R2': return '#a8857f';  //
+                case 'R3': return '#c49a97';  //
+                case 'R4': return '#c0a079';  //
+                case 'R5': return '#eee8aa';  //
+                case 'R6': return '#ffffe6';  //
+                default: return 'gray'; // Color por defecto
+            }
+        }
+
+
+
+
+
+
+
+
+// Funció per obtenir l'estil segons la categoria de `actiu`
+function getStylePoligon(category) {
+    let borderColor; // Color del contorn
+    let fillColor;   // Color del farcit
+    let dashArray = '';  // Inicialitzem dashArray com a cadena buida
+
+    switch (category) {
+        case 'Sí':
+            borderColor = '#e41a1c';
+            fillColor = '#f0d2c3';
+            dashArray = '';
+            break;
+        case 'En desenvolupament':
+            borderColor = '#e41a1c';
+            fillColor = '#f0d2c3';
+            dashArray = '10,5';
+            break;
+        case 'Projectat':
+            borderColor = '#925ed3';
+            fillColor = '#f0d2c3';
+            dashArray = '10,5';
+            break;
+        default:
+            borderColor = 'gray';
+            fillColor = '#cccccc';
+            dashArray = '5,5';
+    }
+
+    return {
+        color: borderColor,
+        fillColor: fillColor,
+        weight: 2,
+        dashArray: dashArray,
+        fillOpacity: 0.5
+    };
+}
+
+// Funció per omplir el desplegable de municipis
+function populateMunicipiDropdown() {
+    const municipiDropdown = document.getElementById('municipi-dropdown');
+    const municipis = [];
+
+    municipi.eachLayer(layer => {
+        const nomMunicipi = layer.feature.properties.nommuni;
+        municipis.push(nomMunicipi);
+    });
+
+    municipis.sort();
+
+    municipis.forEach(nomMunicipi => {
+        const option = document.createElement('option');
+        option.value = nomMunicipi;
+        option.textContent = nomMunicipi;
+        municipiDropdown.appendChild(option);
+    });
+}
+
+// Funció per omplir el desplegable de polígons segons el municipi seleccionat
+function populatePoligonDropdown(selectedMunicipi) {
+    const poligonDropdown = document.getElementById('poligon-dropdown');
+    poligonDropdown.innerHTML = '<option value="">Tots</option>';
+
+    const poligonsList = [];
+
+    poligons.eachLayer(layer => {
+        const nomPoligon = layer.feature.properties.nom;
+        const municipiPoligon = layer.feature.properties.municipi;
+
+        if (!selectedMunicipi || municipiPoligon === selectedMunicipi) {
+            poligonsList.push(nomPoligon);
+        }
+    });
+
+    poligonsList.sort();
+
+    poligonsList.forEach(nomPoligon => {
+        const option = document.createElement('option');
+        option.value = nomPoligon;
+        option.textContent = nomPoligon;
+        poligonDropdown.appendChild(option);
+    });
+}
+
+
+
+
+// Gestionar la selecció d'un polígon
+document.getElementById('poligon-dropdown').addEventListener('change', function () {
+    const selectedPoligon = this.value;
+    let found = false;
+
+    poligons.eachLayer(layer => {
+        const nomPoligon = layer.feature.properties.nom;
+
+        if (nomPoligon === selectedPoligon) {
+            found = true;
+
+            // Guardar l'estil original abans de canviar-lo
+            const originalStyle = {
+                color: layer.options.color,
+                fillColor: layer.options.fillColor,
+                weight: layer.options.weight,
+                dashArray: layer.options.dashArray,
+                fillOpacity: layer.options.fillOpacity
+            };
+
+            // Canviar l'estil del polígon seleccionat
+            layer.setStyle({ color: '#800000', fillColor: '#800000', weight: 3 });
+
+            // Centrar el mapa al polígon seleccionat
+            map.fitBounds(layer.getBounds());
+
+            // Restaurar l'estil original després de 3 segons
+            setTimeout(() => {
+                layer.setStyle(originalStyle);
+            }, 2000);
+        }
+    });
+
+    if (!found) {
+        alert('Polígon no trobat. Comprova el nom.');
+    }
+});
+
+
+
+
+
+
+
+// Gestionar la selecció d'un municipi
+document.getElementById('municipi-dropdown').addEventListener('change', function () {
+    const selectedMunicipi = this.value;
+
+    municipi.eachLayer(layer => {
+        const nomMunicipi = layer.feature.properties.nommuni;
+
+        // Guardar l'estil original abans de canviar-lo
+        const originalStyle = {
+            color: layer.options.color,
+            weight: layer.options.weight,
+            fillOpacity: layer.options.fillOpacity
+        };
+
+        // Canviar l'estil del municipi seleccionat
+        layer.setStyle({
+            color: nomMunicipi === selectedMunicipi ? '#800000' : '#e28000',
+            weight: nomMunicipi === selectedMunicipi ? 3 : 2
+        });
+
+        // Centrar el mapa si el municipi és seleccionat
+        if (nomMunicipi === selectedMunicipi) {
+            map.fitBounds(layer.getBounds());
+
+            // Restaurar l'estil original després de 3 segons
+            setTimeout(() => {
+                layer.setStyle(originalStyle);
+            }, 2000);
+        }
+    });
+
+    populatePoligonDropdown(selectedMunicipi);
+});
+
+
+
+
+
+// Càrrega de la capa de municipis
+fetch('source/muni.geojson')
+    .then(response => response.json())
+    .then(data => {
+        municipi = L.geoJson(data, {
+            style: function () {
+                return {
+                    color: '#FDB32F',
+                    fillOpacity: 0.2
+                };
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties) {
+                    const popupContent = `
+                        <strong>Nom municipi:</strong> ${feature.properties.nommuni}<br>
+                    `;
+                    layer.bindPopup(popupContent);
+
+                    layer.on('click', function() {
+                        const infoBox = document.getElementById('info-box');
+                        infoBox.innerHTML = `
+                            <strong>Informació del municipi:</strong><br>
+                            <strong>Nom municipi:</strong> ${feature.properties.nommuni}<br>
+                            <strong>Superficie en ha.:</strong> ${feature.properties.aream5000 || 'N/A'}<br>
+                        `;
+                        infoBox.style.display = 'block';
+                    });
+                }
+            }
+        }).addTo(map);
+
+        populateMunicipiDropdown();
+    });
+
+// Càrrega de la capa de polígons
+fetch('source/poligons.geojson')
+    .then(response => response.json())
+    .then(data => {
+        poligons = L.geoJson(data, {
+            style: function (feature) {
+                return getStylePoligon(feature.properties.actiu);
+            },
+            onEachFeature: function(feature, layer) {
+                if (feature.properties) {
+                    const popupContent = `
+                        <strong>Nom polígon:</strong> ${feature.properties.nom}<br>
+                    `;
+                    layer.bindPopup(popupContent);
+
+                    layer.on('click', function() {
+                        const infoBox = document.getElementById('info-box');
+                        infoBox.innerHTML = `
+                            <strong>Informació del poligon:</strong><br>
+                            <strong>Nom poligon:</strong> ${feature.properties.nom}<br>
+                            <strong>Superficie en ha.:</strong> ${feature.properties.superficie || 'N/A'}<br>
+                            <strong>Any de creació:</strong> ${feature.properties.any_creaci || 'N/A'}<br>
+                        `;
+                        infoBox.style.display = 'block';
+                    });
+                }
+            }
+        }).addTo(map);
+
+        // Moure els polígons per sobre de la capa de municipis després d'un petit retard
+        setTimeout(() => {
+            poligons.bringToFront();
+        }, 100); // 100 ms de retard per assegurar-se que es carrega primer la capa de municipis
+
+        populatePoligonDropdown('');
+    });
+
+     
+
+
+
+
+
+
+let comarca; // Variable per emmagatzemar la capa de comarca
+
+// Cargar la capa de la comarca (en format GeoJSON) però no afegir-la al mapa encara
+fetch('source/comarca.geojson')
+  .then(response => response.json())
+  .then(data => {
+    comarca = L.geoJson(data, {
+      style: function(feature) {
+        return {
+          color: '#FDB32F', // Color del borde (bordes de la comarca)
+          fillColor: '#FDB32F', // Color del relleno
+          weight: 1, // Grosor del borde
+          fillOpacity: 0.5, // Opacidad del relleno
+          opacity: 0.5 // Opacidad del borde
+        };
+      }
+    });
+
+    // Afegir un esdeveniment per controlar la visibilitat de la capa de comarca amb el checkbox
+    document.getElementById('toggleComarca').addEventListener('change', function() {
+      if (this.checked) {
+        map.addLayer(comarca); // Afegir la capa de comarca si el checkbox està marcat
+      } else {
+        map.removeLayer(comarca); // Eliminar la capa de comarca si el checkbox no està marcat
+      }
+    });
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Afegir l'esdeveniment només si el botó existeix
+const resetButton = document.getElementById('reset-button');
+
+if (resetButton) {
+    resetButton.addEventListener('click', function () {
+        console.log("Recarregant la pàgina..."); // Depuració
+        location.reload(); // Recarrega la pàgina
+    });
+} else {
+    console.error("No s'ha trobat el botó de reset.");
+}
+
+
+
+
+
+    // Crear la llegenda
+var legend = L.control({ position: 'topright' });
+
+legend.onAdd = function() {
+    // Crear un contenedor per a la llegenda
+    var div = L.DomUtil.create('div', 'info legend');
+
+    // Estil bàsic de la llegenda
+    div.style.backgroundColor = 'white';
+    div.style.padding = '10px';
+    div.style.boxShadow = '0 0 15px rgba(0,0,0,0.2)';
+    div.style.cursor = 'pointer';
+    div.style.top = '30px'; // Posiciona la llegenda a 100px des de dalt
+    div.style.right = '0'; // Manté la llegenda a la dreta
+
+    // Crear l'HTML de la llegenda amb caselles
+    div.innerHTML = `
+        
+        <strong>🏭 Polígons industrials </strong>
+        <form id="layer-form">
+            
+            <label>
+                    <input type="checkbox" value="Sí" checked class="polygon-layer"> 
+                    <i style="background:rgba(240, 210, 195, 0.6); width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 2px solid #e41a1c;"></i> Actiu
+            </label><br>
+
+            <label>
+                    <input type="checkbox" value="En desenvolupament" checked class="polygon-layer"> 
+                    <i style="background:rgba(240, 210, 195, 0.6); width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 2px dashed #e41a1c;"></i> En desenvolupament
+            </label><br>
+
+            <label>
+                    <input type="checkbox" value="Projectat" checked class="polygon-layer"> 
+                    <i style="background:rgba(146, 94, 211, 0.6); width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 2px dashed #925ed3;"></i> Projectat
+            </label><br>
+
+
+            <strong>📌 Qualificacions del sòl Industrial</strong>
+        
+            <label><br>
+                <input type="checkbox" value="A1" checked class="mucindustrial-layer"> 
+                <i style="background:#abb6fc; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Activitat econòmica - Industrial
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="A2" checked class="mucindustrial-layer"> 
+                <i style="background:#d8bfd8; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Activitat econòmica - Serveis
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="A3" checked class="mucindustrial-layer"> 
+                <i style="background:#cac0f8; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Activitat econòmica - Logística
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="M1" checked class="mucindustrial-layer"> 
+                <i style="background:#c3c3c3; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Mixtos i altres  -Transformacion
+            </label><br>
+            <label>
+                <input type="checkbox" value="M2" checked class="mucindustrial-layer"> 
+                <i style="background:#c8c378; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Mixtos i altres - Conservació
+            </label><br>
+
+           
+
+            <label>
+                <input type="checkbox" value="D2" checked class="mucindustrial-layer"> 
+                <i style="background:#e4e1fa; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Urbanitzable - Desenvolupament activitat econòmica
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="D3" checked class="mucindustrial-layer"> 
+                <i style="background:#f5d6b2; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Urbanitzable - Desenvolupament mixt
+            </label><br>
+            <label>
+                <input type="checkbox" value="D4" checked class="mucindustrial-layer"> 
+                <i style="background:#ffe4e1; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Urbanitzable - Altres desevolupaments
+            </label><br>
+
+            <label>
+                <input type="checkbox" value="D5" checked class="mucindustrial-layer"> 
+                <i style="background:#fafad2; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Urbanitzable - Urbanitzable no delimitat
+            </label><br>
+
+
+            <strong>📌 Qualificacions del sòl </strong>
+        
+            <label><br>
+                <input type="checkbox" value="SX0" checked class="mucindustrial-layer"> 
+                <i style="background:#ffffff; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - viari
+            </label>
+            <label><br>
+                <input type="checkbox" value="SX1" checked class="mucindustrial-layer"> 
+                <i style="background:#ffffff; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - viari
+            </label>
+            <label><br>
+                <input type="checkbox" value="SX2" checked class="mucindustrial-layer"> 
+                <i style="background:#ffffff; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - viari
+            </label>
+            <label><br>
+                <input type="checkbox" value="SX3" checked class="mucindustrial-layer"> 
+                <i style="background:#ffffff; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - viari
+            </label><br>
+            <label>
+                <input type="checkbox" value="SF" checked class="mucindustrial-layer"> 
+                <i style="background:#dddddd; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - Ferroviari
+            </label><br>
+            <label>
+                <input type="checkbox" value="SH" checked class="mucindustrial-layer"> 
+                <i style="background:#abebff; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - Ferroviari
+            </label><br>
+            <label>
+                <input type="checkbox" value="SV" checked class="mucindustrial-layer"> 
+                <i style="background:#c0ffa8; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - Espais lliures, zones verdes
+            </label><br>
+            <label>
+                <input type="checkbox" value="SE" checked class="mucindustrial-layer"> 
+                <i style="background:#87ceeb; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - Equipaments
+            </label><br>
+            <label>
+                <input type="checkbox" value="ST" checked class="mucindustrial-layer"> 
+                <i style="background:#89cdcd; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Sistemes - Serveis tècnics i ambientals
+            </label><br>
+            <label>
+                <input type="checkbox" value="D1" checked class="mucindustrial-layer"> 
+                <i style="background:#dfd3c3; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Urbanitzable - Desenvolupament residencial
+            </label><br>
+            <label>
+                <input type="checkbox" value="N1" checked class="mucindustrial-layer"> 
+                <i style="background:#e0ffb4; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> No urbanitzable - Rústic
+            </label><br>
+            <label>
+                <input type="checkbox" value="N2" checked class="mucindustrial-layer"> 
+                <i style="background:#d9e8d9; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> No urbanitzable - Protecció
+            </label><br>
+            <label>
+                <input type="checkbox" value="N3" checked class="mucindustrial-layer"> 
+                <i style="background:#bbd9ba; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> No urbanitzable - Protecció sectorial
+            </label><br>
+            <label>
+                <input type="checkbox" value="N4" checked class="mucindustrial-layer"> 
+                <i style="background:#edffd1; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> No urbanitzable - Activitat autoritzada
+            </label><br>
+            <label>
+                <input type="checkbox" value="R1" checked class="mucindustrial-layer"> 
+                <i style="background:#876964; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Residencial - nucli antic
+            </label><br>
+            <label>
+                <input type="checkbox" value="R2" checked class="mucindustrial-layer"> 
+                <i style="background:#a8857f; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Residencial - urbà tradicional
+            </label><br>
+            <label>
+                <input type="checkbox" value="R3" checked class="mucindustrial-layer"> 
+                <i style="background:#c49a97; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Residencial - ordenació tancada
+            </label><br>
+            <label>
+                <input type="checkbox" value="R4" checked class="mucindustrial-layer"> 
+                <i style="background:#c0a079; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Residencial - ordenació oberta
+            </label><br>
+            <label>
+                <input type="checkbox" value="R5" checked class="mucindustrial-layer"> 
+                <i style="background:#eee8aa; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Residencial - cases agrupades
+            </label><br>
+            <label>
+                <input type="checkbox" value="R6" checked class="mucindustrial-layer"> 
+                <i style="background:#ffffe6; width: 12px; height: 12px; display: inline-block; margin-right: 5px; border: 1px solid black;"></i> Residencial - cases aïllades
+            </label><br>
+
+
+
+
+
+
+
+
+            <strong>📌 Classificació del sòl</strong>
+        
+            <label><br>
+                <input type="checkbox" value="SUC" checked class="geojson-layer"> 
+                <i style="background:#a8857f; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> SUC
+            </label><br>
+            <label>
+                <input type="checkbox" value="SNC" checked class="geojson-layer"> 
+                <i style="background:#e6ae99; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> SNC
+            </label><br>
+            <label>
+                <input type="checkbox" value="SUD" checked class="geojson-layer"> 
+                <i style="background:#f5d6b2; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> SUD
+            </label><br>
+            <label>
+                <input type="checkbox" value="SUND" checked class="geojson-layer"> 
+                <i style="background:#fafad2; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> SUND
+            </label><br>
+            <label>
+                <input type="checkbox" value="SNU" checked class="geojson-layer"> 
+                <i style="background:#e0ffb4; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> SNU
+            </label><br>
+
+
+            
+
+            <strong>🌍 Municipis </strong>
+            <br>
+                <label>
+                    <input type="checkbox" id="toggleMunicipi" checked class="municipi-layer"> 
+                    <i style="background:#FDB32F; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Municipis
+            </label><br>
+
+
+
+            <strong>🌍 Comarca de l'Alt Penedès</strong>
+            <br>
+            <label>
+                <input type="checkbox" id="toggleComarca"> 
+                <i style="background:#FDB32F; width: 12px; height: 12px; display: inline-block; margin-right: 5px;"></i> Comarca
+            </label><br>
+        
+        </form>
+    `;
+
+    return div;
+};
+
+// Afegir la llegenda al mapa
+legend.addTo(map);
+
+// Funció per actualitzar les capes segons els checkbox
+document.getElementById('layer-form').addEventListener('change', function(e) {
+    const category = e.target.value; // Obtenir la categoria seleccionada
+    const checked = e.target.checked; // Estat del checkbox
+
+    // Afegir o treure la capa segons l'estat del checkbox
+    geojson.eachLayer(function(layer) {
+        if (layer.feature.properties.c_clas_ajt === category) {
+            if (checked) {
+                map.addLayer(layer); // Afegir la capa
+            } else {
+                map.removeLayer(layer); // Treure la capa
+            }
+        }
+    });
+
+
+
+     // Afegir o treure la capa municipi segons el checkbox
+
+    if (e.target.id === 'toggleMunicipi') { // Si és el checkbox de la comarca
+        if (checked) {
+             map.addLayer(municipi); // Afegir la capa municipi
+        } else {
+            map.removeLayer(municipi); // Treure la capa municipi
+        }
+    }
+// Afegir o treure la capa poligons segons l'estat del checkbox
+    poligons.eachLayer(function(layer) {
+        if (layer.feature.properties.actiu === category) {
+            if (checked) {
+                map.addLayer(layer); // Afegir la capa
+            } else {
+                map.removeLayer(layer); // Treure la capa
+            }
+        }
+    });
+
+// Afegir o treure la capa industria segons l'estat del checkbox
+    mucindustrial.eachLayer(function(layer) {
+        if (layer.feature.properties.c_qual_muc === category) {
+            if (checked) {
+                map.addLayer(layer); // Afegir la capa
+            } else {
+                map.removeLayer(layer); // Treure la capa
+            }
+        }
+    });
+
+
+
+
+
+
+
+});
+
+
+//codi per mostrar/ocultar la capa de municipi i la capa de poligons, per veure els usos permesos
+document.getElementById('toggle-legend-layers').addEventListener('click', function () {
+   
+
+
+    // **Gestionar capa municipi**
+   // Gestionar capa municipi
+const legendMunicipi = document.getElementById('toggleMunicipi');
+const municipiCheckbox = document.querySelector('.municipi-layer'); // Selector del checkbox del municipi
+const isChecked = municipiCheckbox.checked; // Comprovar si està activat
+
+if (isChecked) {
+    map.removeLayer(municipi); // Treure la capa municipi del mapa
+    municipiCheckbox.checked = false; // Desactivar el checkbox
+} else {
+    map.addLayer(municipi); // Afegir la capa municipi al mapa
+    municipiCheckbox.checked = true; // Activar el checkbox
+}
+
+
+    // **Gestionar capes de polígons**
+    const polygonCheckboxes = document.querySelectorAll('.polygon-layer');
+
+    polygonCheckboxes.forEach(function (checkbox) {
+        const category = checkbox.value; // Obtenir el valor de la categoria
+        const isChecked = checkbox.checked; // Comprovar si el checkbox està seleccionat
+
+        // Afegir o treure la capa de polígons segons l'estat del checkbox
+        poligons.eachLayer(function (layer) {
+            if (layer.feature.properties.actiu === category) {
+                if (isChecked) {
+                    map.removeLayer(layer); // Treure la capa del mapa
+                } else {
+                    map.addLayer(layer); // Afegir la capa al mapa
+                }
+            }
+        });
+
+        // Actualitzar l'estat del checkbox
+        checkbox.checked = !isChecked; // Invertir l'estat
+    });
+});
+
+
+
+
+
+
+
+//codi per mostrar/ocultar totes les capes
+document.getElementById('toggle-all-legend-layers').addEventListener('click', function () {
+   
+
+
+
+// **Gestionar capes de geojson**
+    const geojsonCheckboxes = document.querySelectorAll('.geojson-layer');
+
+        geojsonCheckboxes.forEach(function (checkbox) {
+        const category = checkbox.value; // Obtenir el valor de la categoria
+        const isChecked = checkbox.checked; // Comprovar si el checkbox està seleccionat
+
+        // Afegir o treure la capa de polígons segons l'estat del checkbox
+        geojson.eachLayer(function (layer) {
+            if (layer.feature.properties.c_clas_ajt === category) {
+                if (isChecked) {
+                    map.removeLayer(layer); // Treure la capa del mapa
+                } else {
+                    map.addLayer(layer); // Afegir la capa al mapa
+                }
+            }
+        });
+
+        // Actualitzar l'estat del checkbox
+        checkbox.checked = !isChecked; // Invertir l'estat
+    });
+
+
+
+// **Gestionar capes de A1**
+    const mucindustrialCheckboxes = document.querySelectorAll('.mucindustrial-layer');
+
+        mucindustrialCheckboxes.forEach(function (checkbox) {
+        const category = checkbox.value; // Obtenir el valor de la categoria
+        const isChecked = checkbox.checked; // Comprovar si el checkbox està seleccionat
+
+        // Afegir o treure la capa de polígons segons l'estat del checkbox
+        mucindustrial.eachLayer(function (layer) {
+            if (layer.feature.properties.c_qual_muc === category) {
+                if (isChecked) {
+                    map.removeLayer(layer); // Treure la capa del mapa
+                } else {
+                    map.addLayer(layer); // Afegir la capa al mapa
+                }
+            }
+        });
+
+        // Actualitzar l'estat del checkbox
+        checkbox.checked = !isChecked; // Invertir l'estat
+    });
+
+
+
+ // **Gestionar capa municipi**
+   const legendMunicipi = document.getElementById('toggleMunicipi');
+const municipiCheckbox = document.querySelector('.municipi-layer'); // Selector del checkbox del municipi
+const isChecked = municipiCheckbox.checked; // Comprovar si està activat
+
+if (isChecked) {
+    map.removeLayer(municipi); // Treure la capa municipi del mapa
+    municipiCheckbox.checked = false; // Desactivar el checkbox
+} else {
+    map.addLayer(municipi); // Afegir la capa municipi al mapa
+    municipiCheckbox.checked = true; // Activar el checkbox
+}
+
+    // **Gestionar capes de polígons**
+    const polygonCheckboxes = document.querySelectorAll('.polygon-layer');
+
+        polygonCheckboxes.forEach(function (checkbox) {
+        const category = checkbox.value; // Obtenir el valor de la categoria
+        const isChecked = checkbox.checked; // Comprovar si el checkbox està seleccionat
+
+        // Afegir o treure la capa de polígons segons l'estat del checkbox
+        poligons.eachLayer(function (layer) {
+            if (layer.feature.properties.actiu === category) {
+                if (isChecked) {
+                    map.removeLayer(layer); // Treure la capa del mapa
+                } else {
+                    map.addLayer(layer); // Afegir la capa al mapa
+                }
+            }
+        });
+
+        // Actualitzar l'estat del checkbox
+        checkbox.checked = !isChecked; // Invertir l'estat
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+});
+
+
+
+
+     
+    </script>
+</body>
+</html>
